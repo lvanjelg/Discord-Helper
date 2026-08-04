@@ -20,7 +20,11 @@ module.exports = {
                 { name: '/random', value: 'Get a random number from 1 to your max', inline: false },
                 { name: '/r6op', value: 'Get a random Rainbow Six operator for attack or defense', inline: false },
                 { name: '/wheelspin', value: 'Pick a random option from the ones you provide', inline: false },
-                { name: '/csroulette', value: 'Get a Counter Strike roulette strategy', inline: false }
+                { name: '/csroulette', value: 'Get a Counter Strike roulette strategy', inline: false },
+                { name: '/balance', value: 'Check your casino balance', inline: false },
+                { name: '/daily', value: 'Claim your daily casino bonus', inline: false },
+                { name: '/roulette', value: 'Bet on the roulette wheel', inline: false },
+                { name: '/slots', value: 'Spin the slot machine', inline: false }
             );
         await interaction.reply({ embeds: [embed] });
     }

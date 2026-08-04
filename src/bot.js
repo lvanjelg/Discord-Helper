@@ -67,13 +67,3 @@ client.on('interactionCreate', async (interaction) => {
 });
 
 client.login(process.env.DISCORDJS_BOT_TOKEN);
-
-/* Notes
-Add images to ammo chart
-use https://tarkov.dev/api/
-csgo roulette
-joke hr department thing?
-gambling!
-pretty up messages with embeds
-change commands from prefix to slash commands
-*/
