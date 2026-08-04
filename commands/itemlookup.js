@@ -26,11 +26,12 @@ module.exports = {
                 return interaction.editReply('No item found for "' + itemName + '". Try picking from the list.');
             }
 
-            // Fetch craft / barter / hideout usage data for this item
-            const [crafts, barters, stations] = await Promise.all([
+            // Fetch craft / barter / hideout / quest usage data for this item
+            const [crafts, barters, stations, reqTasks] = await Promise.all([
                 tarkov.getCrafts(),
                 tarkov.getBarters(),
                 tarkov.getHideoutStations(),
+                tarkov.getTasksRequiringItem(item.id),
             ]);
 
             const usesItem = (list) => (list || []).some(r => r.item && r.item.id === item.id);
@@ -100,6 +101,24 @@ module.exports = {
                     if (lines.length >= 8) break;
                 }
                 embed.addFields({ name: 'Hideout', value: lines.join('\n').slice(0, 1024), inline: false });
+            }
+
+            if (reqTasks.length > 0) {
+                const typeLabel = (type) => {
+                    const labels = {
+                        findItem: 'find', findQuestItem: 'find', giveItem: 'hand over', giveQuestItem: 'hand over',
+                        plantItem: 'plant', plantQuestItem: 'plant', useItem: 'use', mark: 'mark', sellItem: 'sell',
+                        buildWeapon: 'build with', shoot: 'kill with',
+                    };
+                    return labels[type] || type;
+                };
+                const lines = reqTasks.slice(0, 8).map(t => {
+                    const descs = t.objectives.map(o => typeLabel(o.type) + (o.count ? ' x' + o.count : ''));
+                    if (t.neededKey) descs.push('key');
+                    const desc = descs.length ? ' — ' + Array.from(new Set(descs)).join(', ') : '';
+                    return (t.wikiLink ? '[' + t.name + '](' + t.wikiLink + ')' : t.name) + desc;
+                });
+                embed.addFields({ name: 'Required for Tasks (' + reqTasks.length + ')', value: lines.join('\n').slice(0, 1024), inline: false });
             }
 
             embed.setFooter({ text: 'Data from tarkov.dev' });
