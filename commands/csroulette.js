@@ -1,5 +1,6 @@
-const {Client, EmbedBuilder, SlashCommandBuilder} = require('discord.js');
+const { SlashCommandBuilder } = require('discord.js');
 const fs = require('fs');
+const path = require('path');
 
 module.exports = {
     data: new SlashCommandBuilder()
@@ -32,137 +33,30 @@ module.exports = {
         )
         ,
     async execute(interaction) {
-        console.log("start");
         await interaction.deferReply();
-        const strats = JSON.parse(fs.readFileSync('cs_strats.json'));
-        const map = interaction.option.getString('map');
+
+        const strats = JSON.parse(fs.readFileSync(path.join(__dirname, '..', 'cs_strats.json')));
+        const map = interaction.options.getString('map');
         const side = interaction.options.getString('side');
-        let stratName;
-        let stratDesc;
-        let numStrats;
-        let rand;
-        switch(map){
-            case 'mirage':
-                if(side === 't'){
-                    numStrats = strats.mirage.t.length;
-                    rand = Math.floor(Math.random(numStrats)*numStrats);
-                    stratName = strats.mirage.t[rand].name;
-                    stratDesc = strats.mirage.t[rand].desc;
-                    await interaction.reply('Strategy Name: ' + stratName + '\n Strategy Description: ' + stratDesc);
-                }else if(side === 'ct'){
-                    rand = Math.floor(Math.random(numStrats)*numStrats);
-                    numStrats = strats.mirage.ct.length;
-                    stratName = strats.mirage.ct[rand].name;
-                    stratDesc = strats.mirage.ct[rand].desc;
-                    await interaction.reply('Strategy Name: ' + stratName + '\n Strategy Description: ' + stratDesc);
-                }else{
-                    await interaction.reply('Unknown input, please try again with correct input.');
-                }
-            case 'inferno':
-                if(side === 't'){
-                    numStrats = strats.inferno.t.length; 
-                    rand = Math.floor(Math.random(numStrats)*numStrats);
-                    stratName = strats.inferno.t[rand].name;
-                    stratDesc = strats.inferno.t[rand].desc;
-                    await interaction.reply('Strategy Name: ' + stratName + '\n Strategy Description: ' + stratDesc);
-                }else if(side === 'ct'){
-                    numStrats = strats.inferno.ct.length;
-                    rand = Math.floor(Math.random(numStrats)*numStrats);
-                    stratName = strats.inferno.ct[rand].name;
-                    stratDesc = strats.inferno.ct[rand].desc;
-                    await interaction.reply('Strategy Name: ' + stratName + '\n Strategy Description: ' + stratDesc);
-                }else{
-                    await interaction.reply('Unknown input, please try again with correct input.');
-                }
-            case 'nuke':
-                if(side === 't'){
-                    numStrats = strats.nuke.t.length;
-                    rand = Math.floor(Math.random(numStrats)*numStrats);
-                    stratName = strats.nuke.t[rand].name;
-                    stratDesc = strats.nuke.t[rand].desc;
-                    await interaction.reply('Strategy Name: ' + stratName + '\n Strategy Description: ' + stratDesc);
-                }else if(side === 'ct'){
-                    numStrats = strats.nuke.ct.length;
-                    rand = Math.floor(Math.random(numStrats)*numStrats);
-                    stratName = strats.nuke.ct[rand].name;
-                    stratDesc = strats.nuke.ct[rand].desc;
-                    await interaction.reply('Strategy Name: ' + stratName + '\n Strategy Description: ' + stratDesc);
-                }else{
-                    await interaction.reply('Unknown input, please try again with correct input.');
-                }
-            case 'overpass':
-                if(side === 't'){
-                    numStrats = strats.overpass.t.length;
-                    rand = Math.floor(Math.random(numStrats)*numStrats);
-                    stratName = strats.overpass.t[rand].name;
-                    stratDesc = strats.overpass.t[rand].desc;
-                    await interaction.reply('Strategy Name: ' + stratName + '\n Strategy Description: ' + stratDesc);
-                }else if(side === 'ct'){
-                    numStrats = strats.overpass.ct.length;
-                    rand = Math.floor(Math.random(numStrats)*numStrats);
-                    stratName = strats.overpass.ct[rand].name;
-                    stratDesc = strats.overpass.ct[rand].desc;
-                    await interaction.reply('Strategy Name: ' + stratName + '\n Strategy Description: ' + stratDesc);
-                }else{
-                    await interaction.reply('Unknown input, please try again with correct input.');
-                }
-            case 'train':
-                if(side === 't'){
-                    numStrats = strats.train.t.length;
-                    rand = Math.floor(Math.random(numStrats)*numStrats);
-                    stratName = strats.train.t[rand].name;
-                    stratDesc = strats.train.t[rand].desc;
-                    await interaction.reply('Strategy Name: ' + stratName + '\n Strategy Description: ' + stratDesc);
-                }else if(side === 'ct'){
-                    numStrats = strats.train.ct.length;
-                    rand = Math.floor(Math.random(numStrats)*numStrats);
-                    stratName = strats.train.ct[rand].name;
-                    stratDesc = strats.train.ct[rand].desc;
-                    await interaction.reply('Strategy Name: ' + stratName + '\n Strategy Description: ' + stratDesc);
-                }else{
-                    await interaction.reply('Unknown input, please try again with correct input.');
-                }
-            case 'dust2':
-                if(side === 't'){
-                    numStrats = strats.dust2.t.length;
-                    rand = Math.floor(Math.random(numStrats)*numStrats);
-                    stratName = strats.dust2.t[rand].name;
-                    stratDesc = strats.dust2.t[rand].desc;
-                    await interaction.reply('Strategy Name: ' + stratName + '\n Strategy Description: ' + stratDesc);
-                }else if(side === 'ct'){
-                    numStrats = strats.dust2.ct.length;
-                    rand = Math.floor(Math.random(numStrats)*numStrats);
-                    stratName = strats.dust2.ct[rand].name;
-                    stratDesc = strats.dust2.ct[rand].desc;
-                    await interaction.reply('Strategy Name: ' + stratName + '\n Strategy Description: ' + stratDesc);
-                }else{
-                    await interaction.reply('Unknown input, please try again with correct input.');
-                }
-            case 'reg':
-                numStrats = strats.reg.length;
-                rand = Math.floor(Math.random(numStrats)*numStrats);
-                stratName = strats.reg[rand].name;
-                stratDesc = strats.reg[rand].desc;
-                interaction.reply('Strategy Name: ' + stratName + '\n Strategy Description: ' + stratDesc);
-            case 'CT':
-                numStrats = strats.ct.length;
-                rand = Math.floor(Math.random(numStrats)*numStrats);
-                stratName = strats.ct[rand].name;
-                stratDesc = strats.t[rand].desc;
-                interaction.deferReply('Strategy Name: ' + stratName + '\n Strategy Description: ' + stratDesc);
-                console.log("Strategy Sent");
-            case 't':
-                numStrats = strats.t.length;
-                rand = Math.floor(Math.random(numStrats)*numStrats);
-                stratName = strats.t[rand].name;
-                stratDesc = strats.t[rand].desc;
-                interaction.reply('Strategy Name: ' + stratName + '\n Strategy Description: ' + stratDesc);
+
+        // General strategies: reg / ct / t (no side needed)
+        if (map === 'reg' || map === 'ct' || map === 't') {
+            const list = strats[map];
+            const strat = list[Math.floor(Math.random() * list.length)];
+            return interaction.editReply('Strategy Name: ' + strat.name + '\nStrategy Description: ' + strat.desc);
         }
-        if(map === 'CT'){
-            console.log("caps");
+
+        // Map-specific strategies: side is required
+        if (side !== 't' && side !== 'ct') {
+            return interaction.editReply('Please specify a side (CT or T) for the ' + map + ' strategy.');
         }
-        if(map === 'ct'){
-            console.log("lower");
+
+        if (!strats[map] || !strats[map][side]) {
+            return interaction.editReply('No strategies found for ' + map + ' on ' + side.toUpperCase() + '.');
         }
+
+        const list = strats[map][side];
+        const strat = list[Math.floor(Math.random() * list.length)];
+        await interaction.editReply('Strategy Name: ' + strat.name + '\nStrategy Description: ' + strat.desc);
     }
 };
