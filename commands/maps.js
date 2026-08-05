@@ -5,6 +5,6 @@ module.exports = {
         .setName('maps')
         .setDescription('Get links to EFT map websites.'),
     async execute(interaction) {
-        await interaction.reply('https://mapgenie.io/tarkov \nhttps://www.eftmaps.net/');
+        await interaction.reply('https://mapgenie.io/tarkov');
     }
 };

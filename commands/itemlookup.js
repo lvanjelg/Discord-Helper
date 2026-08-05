@@ -112,11 +112,14 @@ module.exports = {
                     };
                     return labels[type] || type;
                 };
-                const lines = reqTasks.slice(0, 8).map(t => {
-                    const descs = t.objectives.map(o => typeLabel(o.type) + (o.count ? ' x' + o.count : ''));
-                    if (t.neededKey) descs.push('key');
-                    const desc = descs.length ? ' — ' + Array.from(new Set(descs)).join(', ') : '';
-                    return (t.wikiLink ? '[' + t.name + '](' + t.wikiLink + ')' : t.name) + desc;
+                const lines = reqTasks.slice(0, 6).map(t => {
+                    const header = (t.wikiLink ? '[' + t.name + '](' + t.wikiLink + ')' : t.name) + (t.neededKey ? ' — key' : '');
+                    const objLines = t.objectives.slice(0, 2).map(o => {
+                        let line = '• ' + (o.description || typeLabel(o.type));
+                        if (typeof o.count === 'number' && o.count > 0) line += ' (x' + o.count + ')';
+                        return line;
+                    });
+                    return objLines.length ? header + '\n' + objLines.join('\n') : header;
                 });
                 embed.addFields({ name: 'Required for Tasks (' + reqTasks.length + ')', value: lines.join('\n').slice(0, 1024), inline: false });
             }

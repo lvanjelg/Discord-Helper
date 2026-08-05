@@ -54,7 +54,21 @@ async function fetchJson(path) {
 
 // --- Localization: apply the "_en" translation map via JSONPath keys ---
 function parsePath(jPath) {
-    return String(jPath).replace(/^\$/, '').split('.').map(s => s.trim()).filter(Boolean);
+    const out = [];
+    for (const seg of String(jPath).replace(/^\$/, '').split('.')) {
+        const t = seg.trim();
+        if (!t) continue;
+        if (t.includes('[')) {
+            // e.g. "objectives[*]" -> "objectives", "[*]"
+            const idx = t.indexOf('[');
+            const prop = t.slice(0, idx).trim();
+            if (prop) out.push(prop);
+            out.push(t.slice(idx).trim());
+        } else {
+            out.push(t);
+        }
+    }
+    return out;
 }
 
 function replaceIfKey(obj, key, map) {
@@ -80,6 +94,16 @@ function applyTranslationsAt(node, segments, i, map) {
                 if (isLast) replaceIfKey(node, key, map);
                 else applyTranslationsAt(node[key], segments, i + 1, map);
             }
+        }
+        return;
+    }
+
+    const indexMatch = /^\[(\d+)\]$/.exec(seg);
+    if (indexMatch) {
+        const idx = parseInt(indexMatch[1], 10);
+        if (Array.isArray(node) && idx < node.length) {
+            if (isLast) replaceIfKey(node, idx, map);
+            else applyTranslationsAt(node[idx], segments, i + 1, map);
         }
         return;
     }
@@ -212,7 +236,12 @@ async function getItem(name) {
 }
 
 async function getTask(name) {
-    const [tasksData, tradersData, itemsData] = await Promise.all([getTasksData(), getTradersData(), getItemsData()]);
+    const [tasksData, tradersData, itemsData, hideoutData] = await Promise.all([
+        getTasksData(),
+        getTradersData(),
+        getItemsData(),
+        getHideoutData(),
+    ]);
     const tasks = Object.values((tasksData && tasksData.tasks) || {});
     const lower = String(name).toLowerCase();
     const task = tasks.find(t => t.name && t.name.toLowerCase() === lower);
@@ -220,10 +249,59 @@ async function getTask(name) {
 
     const traders = traderById(tradersData);
     const iNames = itemNameById(itemsData);
-    const trader = task.trader ? traders[task.trader] : null;
-    const finish = task.finishRewards || {};
+    const sNames = stationById(hideoutData);
+    const achievements = (tasksData && tasksData.achievements) || {};
 
+    const traderName = (id) => (traders[id] && traders[id].name) || id;
+    const itemName = (id) => iNames[id] || id;
+    const taskRef = (id) => {
+        const t = tasks.find(x => x.id === id);
+        return t ? { name: t.name, wikiLink: t.wikiLink } : null;
+    };
+
+    // What the quest requires you to do (localized descriptions from the API)
+    const objectives = (task.objectives || []).map(o => ({
+        description: o.description || '',
+        type: o.type,
+        count: o.count,
+        optional: !!o.optional,
+        items: (o.items || []).map(itemName).concat(o.item ? [itemName(o.item)] : []),
+    }));
+
+    // Quests that must be completed before / after this one
+    const previousTasks = (task.taskRequirements || []).map(r => taskRef(r.task)).filter(Boolean);
+    const nextTasks = tasks
+        .filter(t => (t.taskRequirements || []).some(r => r.task === task.id))
+        .map(t => ({ name: t.name, wikiLink: t.wikiLink }));
+
+    // Trader loyalty levels required to unlock the quest
+    const traderRequirements = (task.traderRequirements || []).map(r => ({
+        traderName: traderName(r.trader),
+        level: r.value,
+        type: r.requirementType || 'level',
+    }));
+
+    const buildRewards = (rewards) => {
+        const r = rewards || {};
+        const list = [];
+        for (const it of r.items || []) list.push((it.count || 1) + 'x ' + itemName(it.item));
+        for (const s of r.skillLevelReward || []) list.push((s.skill || s.name || 'Skill') + ' +' + (s.level || 1));
+        for (const s of r.traderStanding || []) list.push('+' + (s.standing || 0) + ' ' + traderName(s.trader));
+        for (const u of r.offerUnlock || []) list.push('Unlocks barter: ' + (u.count || 1) + 'x ' + itemName(u.item));
+        for (const u of r.craftUnlock || []) list.push('Unlocks craft: ' + ((sNames[u.station] && sNames[u.station].name) || 'Hideout') + ' Lv' + (u.level || 1) + ' → ' + (u.count || 1) + 'x ' + itemName(u.item));
+        for (const id of r.traderUnlock || []) list.push('Unlocks stock: ' + traderName(id));
+        for (const id of r.traderDialogueUnlock || []) list.push('Unlocks dialogue: ' + traderName(id));
+        for (const c of r.customization || []) list.push('Unlocks: ' + (c.name || 'customization'));
+        for (const id of r.achievement || []) {
+            const a = achievements[id];
+            list.push('Achievement: ' + ((a && a.name) || id));
+        }
+        return list;
+    };
+
+    const trader = task.trader ? traders[task.trader] : null;
     return {
+        id: task.id,
         name: task.name,
         wikiLink: task.wikiLink,
         taskImageLink: task.taskImageLink,
@@ -232,11 +310,12 @@ async function getTask(name) {
         minPlayerLevel: task.minPlayerLevel,
         kappaRequired: task.kappaRequired,
         lightkeeperRequired: task.lightkeeperRequired,
-        finishRewards: {
-            items: (finish.items || []).map(i => ({ count: i.count, item: { name: iNames[i.item] || '?' } })),
-            skillLevelReward: (finish.skillLevelReward || []).map(s => ({ name: s.skill || s.name || '?' })),
-            traderStanding: (finish.traderStanding || []).map(s => ({ standing: s.standing })),
-        },
+        restartable: task.restartable,
+        objectives,
+        previousTasks,
+        nextTasks,
+        traderRequirements,
+        rewards: buildRewards(task.finishRewards),
     };
 }
 
@@ -306,7 +385,7 @@ async function getTasksRequiringItem(itemId) {
             result.push({
                 name: task.name,
                 wikiLink: task.wikiLink,
-                objectives: reqObjectives.map(o => ({ type: o.type, count: o.count })),
+                objectives: reqObjectives.map(o => ({ type: o.type, count: o.count, description: o.description || '' })),
                 neededKey,
             });
         }

@@ -7,7 +7,7 @@ const https = require('https');
 const chokidar = require('chokidar');
 const fs = require('fs');
 const path = require('path');
-const {Client,GatewayIntentBits, Attachment, EmbedBuilder, SlashCommandBuilder} = require('discord.js');
+const {Client,GatewayIntentBits, Attachment, EmbedBuilder, SlashCommandBuilder, MessageFlags} = require('discord.js');
 const { hostname } = require("os");
 const { exec } = require('child_process');
 const client = new Client({intents: [GatewayIntentBits.Guilds,
@@ -57,7 +57,7 @@ client.on('interactionCreate', async (interaction) => {
         await command.execute(interaction);
     } catch (error) {
         console.error('Error executing command ' + interaction.commandName + ':', error);
-        const errorMsg = { content: 'There was an error executing this command.', ephemeral: true };
+        const errorMsg = { content: 'There was an error executing this command.', flags: MessageFlags.Ephemeral };
         if (interaction.deferred || interaction.replied) {
             await interaction.editReply(errorMsg).catch(() => {});
         } else {
